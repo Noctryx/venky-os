@@ -1173,7 +1173,7 @@ async function checkSession(){
   if(!sb){ showAuth(); return; }
   const{data:{session}}=await sb.auth.getSession();
   if(session) onSignedIn(session.user);
-  else showAuth();
+  else{ showAuth(); renderAll(); scheduleNotifications(); }
   sb.auth.onAuthStateChange((_,s)=>{ if(s) onSignedIn(s.user); else{ currentUser=null; updateUserUI(); } });
 }
 
@@ -1210,7 +1210,7 @@ document.getElementById('auth-magic-btn').onclick=async()=>{
   else{ msg.textContent='✓ Check your email — magic link sent!';msg.className='auth-msg ok'; }
 };
 
-document.getElementById('auth-skip-btn').onclick=()=>{ hideAuth(); };
+document.getElementById('auth-skip-btn').onclick=()=>{ hideAuth(); renderAll(); scheduleNotifications(); };
 
 async function syncToCloud(){
   if(!sb||!currentUser)return;
