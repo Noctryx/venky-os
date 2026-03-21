@@ -1262,7 +1262,8 @@ if('serviceWorker' in navigator){
 initSupabase();
 
 loadAll();seedSchedule();
-if(SUPABASE_URL!=="YOUR_SUPABASE_URL"){checkSession();}else{renderAll();scheduleNotifications();}
+renderAll();scheduleNotifications();
+if(SUPABASE_URL!=="YOUR_SUPABASE_URL"){checkSession();}
 /* Re-check notifications every minute in case day changes */
 setInterval(()=>{scheduleNotifications();},60000);
 </script>
