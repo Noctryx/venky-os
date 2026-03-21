@@ -324,7 +324,7 @@ body.light .notif-panel{background:var(--base);}
   .app{padding:0 12px;}
 }
 
-/* AUTH */
+/* ── AUTH ── */
 .auth-overlay{position:fixed;inset:0;background:#121212;z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
 .auth-overlay.hidden{display:none;}
 .auth-box{background:#181818;border-radius:20px;padding:36px 32px;width:100%;max-width:400px;text-align:center;}
@@ -332,12 +332,10 @@ body.light .notif-panel{background:var(--base);}
 .auth-title{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px;margin-bottom:6px;}
 .auth-sub{font-size:14px;color:#6a6a6a;margin-bottom:28px;line-height:1.5;}
 .auth-input{width:100%;background:#242424;border:none;color:#fff;font-family:"DM Sans",sans-serif;font-size:15px;padding:12px 16px;border-radius:10px;outline:none;margin-bottom:12px;}
-.auth-input::placeholder{color:#6a6a6a;}
-.auth-input:focus{background:#2a2a2a;}
+.auth-input::placeholder{color:#6a6a6a;}.auth-input:focus{background:#2a2a2a;}
 .auth-btn{width:100%;background:#1db954;color:#000;border:none;cursor:pointer;font-family:"DM Sans",sans-serif;font-size:15px;font-weight:700;padding:12px;border-radius:500px;transition:background .15s;margin-bottom:10px;}
 .auth-btn:hover{background:#1ed760;}
-.auth-btn.sec{background:#242424;color:#b3b3b3;}
-.auth-btn.sec:hover{background:#2a2a2a;color:#fff;}
+.auth-btn.sec{background:#242424;color:#b3b3b3;}.auth-btn.sec:hover{background:#2a2a2a;color:#fff;}
 .auth-msg{font-size:13px;color:#6a6a6a;margin-top:10px;line-height:1.5;}
 .auth-msg.ok{color:#1db954;}.auth-msg.err{color:#f15e6c;}
 .user-pill{display:flex;align-items:center;gap:7px;background:#242424;padding:5px 12px 5px 6px;border-radius:500px;cursor:pointer;transition:background .15s;}
@@ -467,7 +465,8 @@ body.light .notif-panel{background:var(--base);}
 </main>
 </div>
 
-<!-- AUTH -->
+
+<!-- AUTH OVERLAY -->
 <div class="auth-overlay hidden" id="auth-overlay">
   <div class="auth-box">
     <div class="auth-logo">V</div>
@@ -479,7 +478,6 @@ body.light .notif-panel{background:var(--base);}
     <div class="auth-msg" id="auth-msg"></div>
   </div>
 </div>
-
 <!-- MODAL -->
 <div class="overlay" id="modal-overlay">
   <div class="modal">
@@ -1165,16 +1163,20 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 let sb=null,currentUser=null;
 
 function initSupabase(){
-  if(SUPABASE_URL==='YOUR_SUPABASE_URL')return;
   try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON); }catch(e){ console.warn('Supabase init failed',e); }
 }
 
 async function checkSession(){
-  if(!sb){ showAuth(); return; }
-  const{data:{session}}=await sb.auth.getSession();
-  if(session) onSignedIn(session.user);
-  else{ showAuth(); renderAll(); scheduleNotifications(); }
-  sb.auth.onAuthStateChange((_,s)=>{ if(s) onSignedIn(s.user); else{ currentUser=null; updateUserUI(); } });
+  if(!sb)return;
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(session) onSignedIn(session.user);
+    else showAuth();
+    sb.auth.onAuthStateChange((_,s)=>{
+      if(s) onSignedIn(s.user);
+      else{ currentUser=null; updateUserUI(); showAuth(); }
+    });
+  }catch(e){ console.warn('checkSession failed',e); }
 }
 
 function showAuth(){ document.getElementById('auth-overlay').classList.remove('hidden'); }
@@ -1202,42 +1204,54 @@ document.getElementById('auth-magic-btn').onclick=async()=>{
   const email=document.getElementById('auth-email').value.trim();
   const msg=document.getElementById('auth-msg');
   if(!email){ msg.textContent='Please enter your email.';msg.className='auth-msg err';return; }
-  if(!sb){ msg.textContent='Supabase not configured yet.';msg.className='auth-msg err';return; }
   msg.textContent='Sending…';msg.className='auth-msg';
-  const redirectTo='https://noctryx.github.io/venky-os/';
-  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:redirectTo}});
-  if(error){ msg.textContent=error.message;msg.className='auth-msg err'; }
-  else{ msg.textContent='✓ Check your email — magic link sent!';msg.className='auth-msg ok'; }
+  try{
+    const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:'https://noctryx.github.io/venky-os/'}});
+    if(error){ msg.textContent=error.message;msg.className='auth-msg err'; }
+    else{ msg.textContent='✓ Check your email — magic link sent!';msg.className='auth-msg ok'; }
+  }catch(e){ msg.textContent='Something went wrong. Try again.';msg.className='auth-msg err'; }
 };
 
-document.getElementById('auth-skip-btn').onclick=()=>{ hideAuth(); renderAll(); scheduleNotifications(); };
+document.getElementById('auth-skip-btn').onclick=()=>{ hideAuth(); };
 
 async function syncToCloud(){
-  if(!sb||!currentUser)return;
-  setSyncBadge('syncing');
-  const{error}=await sb.from('user_data').upsert({user_id:currentUser.id,entries:JSON.stringify(entries),done_marks:JSON.stringify(done),updated_at:new Date().toISOString()},{onConflict:'user_id'});
-  setSyncBadge(error?'offline':'synced');
+  if(!sb||!currentUser||!entries.length)return;
+  try{
+    await sb.from('user_data').upsert(
+      {user_id:currentUser.id,entries:JSON.stringify(entries),done_marks:JSON.stringify(done),updated_at:new Date().toISOString()},
+      {onConflict:'user_id'}
+    );
+    setSyncBadge('synced');
+  }catch(e){ setSyncBadge('offline'); }
 }
 
 async function syncFromCloud(){
   if(!sb||!currentUser)return;
   setSyncBadge('syncing');
-  const{data,error}=await sb.from('user_data').select('*').eq('user_id',currentUser.id).single();
-  if(error&&error.code!=='PGRST116'){ setSyncBadge('offline');return; }
-  if(data){
-    const cloudEntries=JSON.parse(data.entries||'[]');
-    const cloudDone=JSON.parse(data.done_marks||'{}');
-    if(cloudEntries.length>0){
-      entries=cloudEntries;
-      done=cloudDone;
-      localStorage.setItem('lifeos-entries',JSON.stringify(entries));
-      localStorage.setItem('lifeos-done',JSON.stringify(done));
-    } else {
-      syncToCloud();
+  try{
+    const{data,error}=await sb.from('user_data').select('*').eq('user_id',currentUser.id).single();
+    if(error){
+      /* PGRST116 = no row yet — push local data up */
+      if(error.code==='PGRST116'){ await syncToCloud(); }
+      else setSyncBadge('offline');
+      return;
     }
-    renderAll();scheduleNotifications();
-  }
-  setSyncBadge('synced');
+    if(data){
+      const cloudEntries=JSON.parse(data.entries||'[]');
+      if(cloudEntries.length>0){
+        /* cloud has data — use it */
+        entries=cloudEntries;
+        try{done=JSON.parse(data.done_marks||'{}');}catch(e){}
+        localStorage.setItem('lifeos-entries',JSON.stringify(entries));
+        localStorage.setItem('lifeos-done',JSON.stringify(done));
+        renderAll();scheduleNotifications();
+      } else {
+        /* cloud is empty — push local seed up */
+        await syncToCloud();
+      }
+    }
+    setSyncBadge('synced');
+  }catch(e){ setSyncBadge('offline'); console.warn('syncFromCloud error',e); }
 }
 
 function setSyncBadge(state){
@@ -1246,26 +1260,25 @@ function setSyncBadge(state){
   b.textContent=state==='syncing'?'syncing…':state==='offline'?'offline':'synced';
 }
 
-/* Override save to also sync */
-const _origSaveEntries=saveEntries;
-const _origSaveDone=saveDone;
-function saveEntries(){ localStorage.setItem('lifeos-entries',JSON.stringify(entries)); if(currentUser)syncToCloud(); }
+/* Wrap saveEntries + saveDone to also push to cloud */
+const _se=saveEntries,_sd=saveDone;
+function saveEntries(){ localStorage.setItem('lifeos-entries',JSON.stringify(entries)); if(currentUser&&entries.length)syncToCloud(); }
 function saveDone(){ localStorage.setItem('lifeos-done',JSON.stringify(done)); if(currentUser)syncToCloud(); }
 
 /* PWA Service Worker */
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/venky-os/sw.js').catch(e=>console.warn('SW:',e));
-  });
+if('serviceWorker'in navigator){
+  window.addEventListener('load',()=>{ navigator.serviceWorker.register('/venky-os/sw.js').catch(()=>{}); });
 }
 
+/* ── BOOT SEQUENCE ── */
 initSupabase();
+loadAll();
+seedSchedule();
+renderAll();          /* always render local data immediately */
+scheduleNotifications();
+checkSession();       /* then check cloud auth in background */
+setInterval(()=>scheduleNotifications(),60000);
 
-loadAll();seedSchedule();
-renderAll();scheduleNotifications();
-if(SUPABASE_URL!=="YOUR_SUPABASE_URL"){checkSession();}
-/* Re-check notifications every minute in case day changes */
-setInterval(()=>{scheduleNotifications();},60000);
 </script>
 </body>
 </html>
