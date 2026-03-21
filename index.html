@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Venky's OS</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Venky's OS">
+<meta name="theme-color" content="#1db954">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -315,6 +323,30 @@ body.light .notif-panel{background:var(--base);}
   .week-grid{grid-template-columns:repeat(3,1fr);}
   .app{padding:0 12px;}
 }
+
+/* AUTH */
+.auth-overlay{position:fixed;inset:0;background:#121212;z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
+.auth-overlay.hidden{display:none;}
+.auth-box{background:#181818;border-radius:20px;padding:36px 32px;width:100%;max-width:400px;text-align:center;}
+.auth-logo{width:52px;height:52px;background:#1db954;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px;font-weight:700;color:#000;}
+.auth-title{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px;margin-bottom:6px;}
+.auth-sub{font-size:14px;color:#6a6a6a;margin-bottom:28px;line-height:1.5;}
+.auth-input{width:100%;background:#242424;border:none;color:#fff;font-family:"DM Sans",sans-serif;font-size:15px;padding:12px 16px;border-radius:10px;outline:none;margin-bottom:12px;}
+.auth-input::placeholder{color:#6a6a6a;}
+.auth-input:focus{background:#2a2a2a;}
+.auth-btn{width:100%;background:#1db954;color:#000;border:none;cursor:pointer;font-family:"DM Sans",sans-serif;font-size:15px;font-weight:700;padding:12px;border-radius:500px;transition:background .15s;margin-bottom:10px;}
+.auth-btn:hover{background:#1ed760;}
+.auth-btn.sec{background:#242424;color:#b3b3b3;}
+.auth-btn.sec:hover{background:#2a2a2a;color:#fff;}
+.auth-msg{font-size:13px;color:#6a6a6a;margin-top:10px;line-height:1.5;}
+.auth-msg.ok{color:#1db954;}.auth-msg.err{color:#f15e6c;}
+.user-pill{display:flex;align-items:center;gap:7px;background:#242424;padding:5px 12px 5px 6px;border-radius:500px;cursor:pointer;transition:background .15s;}
+.user-pill:hover{background:#2a2a2a;}
+.u-av{width:22px;height:22px;border-radius:50%;background:#1db954;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;flex-shrink:0;}
+.u-name{font-size:12px;font-weight:600;color:#b3b3b3;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sync-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:500px;background:rgba(29,185,84,.15);color:#1db954;}
+.sync-badge.syncing{background:rgba(245,158,11,.15);color:#f59e0b;}
+.sync-badge.offline{background:rgba(241,94,108,.15);color:#f15e6c;}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--elevated);border-radius:3px;}
@@ -337,6 +369,7 @@ body.light .notif-panel{background:var(--base);}
   </div>
   <div class="header-right">
     <div class="date-pill" id="today-badge"></div>
+    <div class="user-pill" id="user-pill" style="display:none" onclick="signOut()"><div class="u-av" id="u-av">V</div><span class="u-name" id="u-name"></span><span class="sync-badge" id="sync-badge">synced</span></div>
     <button class="icon-btn" id="notif-btn" title="Reminders">🔔<span class="notif-dot" id="notif-dot"></span></button>
   </div>
 </header>
@@ -432,6 +465,19 @@ body.light .notif-panel{background:var(--base);}
 </div>
 
 </main>
+</div>
+
+<!-- AUTH -->
+<div class="auth-overlay hidden" id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">V</div>
+    <div class="auth-title">Venky's OS</div>
+    <div class="auth-sub">Sign in to sync your data across<br>all your devices automatically</div>
+    <input class="auth-input" id="auth-email" type="email" placeholder="Your email address" autocomplete="email">
+    <button class="auth-btn" id="auth-magic-btn">Send Magic Link</button>
+    <button class="auth-btn sec" id="auth-skip-btn">Continue without syncing</button>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
 </div>
 
 <!-- MODAL -->
@@ -1112,7 +1158,105 @@ function seedSchedule(){
   localStorage.setItem('lifeos-seeded-v2','1');
 }
 
-loadAll();seedSchedule();renderAll();scheduleNotifications();
+
+/* ══ SUPABASE SYNC ══ */
+const SUPABASE_URL  = 'https://noctryx.github.io/venky-os/';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4Y2JmcnB2eGtpc3FzcnJrb2RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNjU3MDYsImV4cCI6MjA4OTY0MTcwNn0.SmWWhrRDDyrLano0rLx8OTlazu9MRspsdsazdJsaSTA';
+let sb=null,currentUser=null;
+
+function initSupabase(){
+  if(SUPABASE_URL==='YOUR_SUPABASE_URL')return;
+  try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON); }catch(e){ console.warn('Supabase init failed',e); }
+}
+
+async function checkSession(){
+  if(!sb){ showAuth(); return; }
+  const{data:{session}}=await sb.auth.getSession();
+  if(session) onSignedIn(session.user);
+  else showAuth();
+  sb.auth.onAuthStateChange((_,s)=>{ if(s) onSignedIn(s.user); else{ currentUser=null; updateUserUI(); } });
+}
+
+function showAuth(){ document.getElementById('auth-overlay').classList.remove('hidden'); }
+function hideAuth(){ document.getElementById('auth-overlay').classList.add('hidden'); }
+
+function onSignedIn(user){
+  currentUser=user; hideAuth(); updateUserUI(); syncFromCloud();
+}
+
+function updateUserUI(){
+  const pill=document.getElementById('user-pill');
+  if(!currentUser){ pill.style.display='none'; return; }
+  pill.style.display='flex';
+  document.getElementById('u-av').textContent=(currentUser.email||'V')[0].toUpperCase();
+  document.getElementById('u-name').textContent=currentUser.email.split('@')[0];
+}
+
+async function signOut(){
+  if(!sb||!currentUser)return;
+  await sb.auth.signOut();
+  currentUser=null; updateUserUI(); showAuth();
+}
+
+document.getElementById('auth-magic-btn').onclick=async()=>{
+  const email=document.getElementById('auth-email').value.trim();
+  const msg=document.getElementById('auth-msg');
+  if(!email){ msg.textContent='Please enter your email.';msg.className='auth-msg err';return; }
+  if(!sb){ msg.textContent='Supabase not configured yet.';msg.className='auth-msg err';return; }
+  msg.textContent='Sending…';msg.className='auth-msg';
+  const redirectTo='https://noctryx.github.io/venky-os/';
+  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:redirectTo}});
+  if(error){ msg.textContent=error.message;msg.className='auth-msg err'; }
+  else{ msg.textContent='✓ Check your email — magic link sent!';msg.className='auth-msg ok'; }
+};
+
+document.getElementById('auth-skip-btn').onclick=()=>{ hideAuth(); };
+
+async function syncToCloud(){
+  if(!sb||!currentUser)return;
+  setSyncBadge('syncing');
+  const{error}=await sb.from('user_data').upsert({user_id:currentUser.id,entries:JSON.stringify(entries),done_marks:JSON.stringify(done),updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  setSyncBadge(error?'offline':'synced');
+}
+
+async function syncFromCloud(){
+  if(!sb||!currentUser)return;
+  setSyncBadge('syncing');
+  const{data,error}=await sb.from('user_data').select('*').eq('user_id',currentUser.id).single();
+  if(error&&error.code!=='PGRST116'){ setSyncBadge('offline');return; }
+  if(data){
+    try{entries=JSON.parse(data.entries||'[]');}catch(e){}
+    try{done=JSON.parse(data.done_marks||'{}');}catch(e){}
+    localStorage.setItem('lifeos-entries',JSON.stringify(entries));
+    localStorage.setItem('lifeos-done',JSON.stringify(done));
+    renderAll();scheduleNotifications();
+  }
+  setSyncBadge('synced');
+}
+
+function setSyncBadge(state){
+  const b=document.getElementById('sync-badge');if(!b)return;
+  b.className='sync-badge'+(state!=='synced'?' '+state:'');
+  b.textContent=state==='syncing'?'syncing…':state==='offline'?'offline':'synced';
+}
+
+/* Override save to also sync */
+const _origSaveEntries=saveEntries;
+const _origSaveDone=saveDone;
+function saveEntries(){ localStorage.setItem('lifeos-entries',JSON.stringify(entries)); if(currentUser)syncToCloud(); }
+function saveDone(){ localStorage.setItem('lifeos-done',JSON.stringify(done)); if(currentUser)syncToCloud(); }
+
+/* PWA Service Worker */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/venky-os/sw.js').catch(e=>console.warn('SW:',e));
+  });
+}
+
+initSupabase();
+
+loadAll();seedSchedule();
+if(SUPABASE_URL!=="YOUR_SUPABASE_URL"){checkSession();}else{renderAll();scheduleNotifications();}
 /* Re-check notifications every minute in case day changes */
 setInterval(()=>{scheduleNotifications();},60000);
 </script>
