@@ -1225,10 +1225,16 @@ async function syncFromCloud(){
   const{data,error}=await sb.from('user_data').select('*').eq('user_id',currentUser.id).single();
   if(error&&error.code!=='PGRST116'){ setSyncBadge('offline');return; }
   if(data){
-    try{entries=JSON.parse(data.entries||'[]');}catch(e){}
-    try{done=JSON.parse(data.done_marks||'{}');}catch(e){}
-    localStorage.setItem('lifeos-entries',JSON.stringify(entries));
-    localStorage.setItem('lifeos-done',JSON.stringify(done));
+    const cloudEntries=JSON.parse(data.entries||'[]');
+    const cloudDone=JSON.parse(data.done_marks||'{}');
+    if(cloudEntries.length>0){
+      entries=cloudEntries;
+      done=cloudDone;
+      localStorage.setItem('lifeos-entries',JSON.stringify(entries));
+      localStorage.setItem('lifeos-done',JSON.stringify(done));
+    } else {
+      syncToCloud();
+    }
     renderAll();scheduleNotifications();
   }
   setSyncBadge('synced');
