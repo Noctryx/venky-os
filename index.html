@@ -4,14 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Venky's OS</title>
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Venky's OS">
-<meta name="theme-color" content="#1db954">
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon-192.png">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -67,8 +59,7 @@ body{background:var(--bg);color:var(--t1);font-family:'DM Sans',system-ui,sans-s
 /* ── DAY SUMMARY CARD ── */
 .day-card{background:var(--base);border-radius:var(--r-xl);padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
 .day-score-wrap{display:flex;align-items:center;gap:14px;}
-.day-score-ring{position:relative;width:56px;height:56px;flex-shrink:0;}
-.day-score-ring canvas{position:absolute;inset:0;}
+.day-score-ring{position:relative;width:56px;height:56px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;}
 .day-score-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--t1);}
 .day-score-info{display:flex;flex-direction:column;gap:3px;}
 .day-score-label{font-size:15px;font-weight:600;color:var(--t1);letter-spacing:-.2px;}
@@ -324,33 +315,6 @@ body.light .notif-panel{background:var(--base);}
   .week-grid{grid-template-columns:repeat(3,1fr);}
   .app{padding:0 12px;}
 }
-
-/* ── AUTH OVERLAY ── */
-.auth-overlay{position:fixed;inset:0;background:#121212;z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
-.auth-overlay.hidden{display:none;}
-.auth-box{background:#181818;border-radius:20px;padding:36px 32px;width:100%;max-width:400px;text-align:center;}
-.auth-logo-mark{width:52px;height:52px;background:#1db954;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px;font-weight:700;color:#000;}
-.auth-title{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px;margin-bottom:6px;}
-.auth-sub{font-size:14px;color:#6a6a6a;margin-bottom:28px;}
-.auth-input{width:100%;background:#242424;border:none;color:#fff;font-family:"DM Sans",sans-serif;font-size:15px;padding:12px 16px;border-radius:10px;outline:none;margin-bottom:12px;transition:background .15s;}
-.auth-input:focus{background:#2a2a2a;}
-.auth-input::placeholder{color:#6a6a6a;}
-.auth-btn{width:100%;background:#1db954;color:#000;border:none;cursor:pointer;font-family:"DM Sans",sans-serif;font-size:15px;font-weight:700;padding:12px;border-radius:500px;transition:background .15s;margin-bottom:10px;}
-.auth-btn:hover{background:#1ed760;}
-.auth-btn.secondary{background:#242424;color:#b3b3b3;margin-bottom:0;}
-.auth-btn.secondary:hover{background:#2a2a2a;color:#fff;}
-.auth-msg{font-size:13px;color:#6a6a6a;margin-top:12px;line-height:1.5;}
-.auth-msg.success{color:#1db954;}
-.auth-msg.error{color:#f15e6c;}
-/* User pill in header */
-.user-pill{display:flex;align-items:center;gap:7px;background:#242424;padding:5px 12px 5px 6px;border-radius:500px;cursor:pointer;transition:background .15s;}
-.user-pill:hover{background:#2a2a2a;}
-.user-avatar{width:22px;height:22px;border-radius:50%;background:#1db954;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;flex-shrink:0;}
-.user-name{font-size:12px;font-weight:600;color:#b3b3b3;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.sync-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:500px;background:rgba(29,185,84,.15);color:#1db954;margin-left:2px;}
-.sync-badge.syncing{background:rgba(245,158,11,.15);color:#f59e0b;}
-.sync-badge.offline{background:rgba(241,94,108,.15);color:#f15e6c;}
-
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--elevated);border-radius:3px;}
@@ -373,7 +337,6 @@ body.light .notif-panel{background:var(--base);}
   </div>
   <div class="header-right">
     <div class="date-pill" id="today-badge"></div>
-    <div class="user-pill" id="user-pill" style="display:none" onclick="signOut()"><div class="user-avatar" id="user-avatar">V</div><span class="user-name" id="user-name"></span><span class="sync-badge" id="sync-badge">synced</span></div>
     <button class="icon-btn" id="notif-btn" title="Reminders">🔔<span class="notif-dot" id="notif-dot"></span></button>
   </div>
 </header>
@@ -471,19 +434,6 @@ body.light .notif-panel{background:var(--base);}
 </main>
 </div>
 
-<!-- AUTH OVERLAY -->
-<div class="auth-overlay" id="auth-overlay">
-  <div class="auth-box">
-    <div class="auth-logo-mark">V</div>
-    <div class="auth-title">Venky's OS</div>
-    <div class="auth-sub">Sign in to sync your data across all devices</div>
-    <input class="auth-input" id="auth-email" type="email" placeholder="Your email address">
-    <button class="auth-btn" id="auth-magic-btn">Send Magic Link</button>
-    <button class="auth-btn secondary" id="auth-skip-btn">Continue without syncing</button>
-    <div class="auth-msg" id="auth-msg"></div>
-  </div>
-</div>
-
 <!-- MODAL -->
 <div class="overlay" id="modal-overlay">
   <div class="modal">
@@ -573,7 +523,6 @@ let charts={};
 let notifTimeouts=[];
 let leadMin=10;
 let notifPanelOpen=false;
-let scoreChart=null;
 
 /* ── UTILS ── */
 const today=()=>fmt(new Date());
@@ -768,16 +717,19 @@ function buildChip(e,ds){
 /* ── DAY SUMMARY CARD ── */
 function renderDayCard(ds,dayEntries){
   const card=document.getElementById('day-card');
-  if(scoreChart){scoreChart.destroy();scoreChart=null;}
   const total=dayEntries.length;
   const doneCount=dayEntries.filter(e=>isDone(e.id,ds)).length;
   const pct=total>0?Math.round(doneCount/total*100):0;
   const areasPresent=[...new Set(dayEntries.map(e=>e.area))];
   const isOverloaded=total>=8;
 
+  /* CSS conic-gradient ring — no Canvas/Chart.js needed */
+  const ringStyle=`background:conic-gradient(#1db954 ${pct*3.6}deg,rgba(255,255,255,.08) 0deg);width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;`;
+  const innerStyle=`width:42px;height:42px;border-radius:50%;background:var(--base);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--t1);`;
+
   card.innerHTML=`
     <div class="day-score-wrap">
-      <div class="day-score-ring"><canvas id="score-ring"></canvas><div class="day-score-num">${pct}%</div></div>
+      <div style="${ringStyle}"><div style="${innerStyle}">${pct}%</div></div>
       <div class="day-score-info">
         <div class="day-score-label">Today's score</div>
         <div class="day-score-sub">${doneCount} of ${total} done</div>
@@ -789,18 +741,8 @@ function renderDayCard(ds,dayEntries){
       <div class="day-stat"><div class="day-stat-val">${areasPresent.length}</div><div class="day-stat-lbl">Areas</div></div>
     </div>
     <div class="day-areas" id="day-areas-pips"></div>
-    <div class="overload-badge ${isOverloaded?'show':''}" title="Heavy day — consider removing lower priority items">⚠ Heavy day</div>
+    <div class="overload-badge ${isOverloaded?'show':''}" title="Heavy day">⚠ Heavy day</div>
   `;
-
-  /* ring chart */
-  const isLight=document.body.classList.contains('light');
-  const canvas=document.getElementById('score-ring');
-  canvas.width=56;canvas.height=56;
-  scoreChart=new Chart(canvas,{
-    type:'doughnut',
-    data:{datasets:[{data:[pct,100-pct],backgroundColor:[isLight?'#1a7d3e':'#1db954',isLight?'rgba(0,0,0,.08)':'rgba(255,255,255,.08)'],borderWidth:0}]},
-    options:{cutout:'74%',animation:{duration:600},plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}
-  });
 
   /* area pips */
   const pips=document.getElementById('day-areas-pips');
@@ -1170,130 +1112,7 @@ function seedSchedule(){
   localStorage.setItem('lifeos-seeded-v2','1');
 }
 
-
-/* ══════════════════════════════════════════
-   SUPABASE SYNC
-   ══════════════════════════════════════════ */
-const SUPABASE_URL = 'https://xxcbfrpvxkisqsrrkodf.supabase.co';      // ← replace after setup
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4Y2JmcnB2eGtpc3FzcnJrb2RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNjU3MDYsImV4cCI6MjA4OTY0MTcwNn0.SmWWhrRDDyrLano0rLx8OTlazu9MRspsdsazdJsaSTA'; // ← replace after setup
-
-let sb = null;
-let currentUser = null;
-let syncEnabled = false;
-
-function initSupabase(){
-  if(SUPABASE_URL === 'YOUR_SUPABASE_URL') return; // not configured yet
-  try{
-    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-  }catch(e){ console.warn('Supabase init failed', e); }
-}
-
-/* Auth */
-async function checkSession(){
-  if(!sb) return showAuth();
-  const { data:{ session } } = await sb.auth.getSession();
-  if(session){ onSignedIn(session.user); }
-  else { showAuth(); }
-
-  sb.auth.onAuthStateChange((_,session)=>{
-    if(session) onSignedIn(session.user);
-    else { currentUser=null;syncEnabled=false;updateUserUI(); }
-  });
-}
-
-function showAuth(){
-  document.getElementById('auth-overlay').classList.remove('hidden');
-}
-function hideAuth(){
-  document.getElementById('auth-overlay').classList.add('hidden');
-}
-
-function onSignedIn(user){
-  currentUser=user; syncEnabled=true; hideAuth();
-  updateUserUI();
-  syncFromCloud();
-}
-
-function updateUserUI(){
-  const pill=document.getElementById('user-pill');
-  if(!currentUser){ pill.style.display='none'; return; }
-  pill.style.display='flex';
-  const initials=(currentUser.email||'V').slice(0,1).toUpperCase();
-  document.getElementById('user-avatar').textContent=initials;
-  document.getElementById('user-name').textContent=currentUser.email.split('@')[0];
-}
-
-async function signOut(){
-  if(!sb||!currentUser)return;
-  await sb.auth.signOut();
-  currentUser=null;syncEnabled=false;
-  updateUserUI();showAuth();
-}
-
-document.getElementById('auth-magic-btn').onclick=async()=>{
-  const email=document.getElementById('auth-email').value.trim();
-  const msg=document.getElementById('auth-msg');
-  if(!email){ msg.textContent='Please enter your email.';msg.className='auth-msg error';return; }
-  if(!sb){ msg.textContent='Supabase not configured yet — see SETUP.md.';msg.className='auth-msg error';return; }
-  msg.textContent='Sending magic link…';msg.className='auth-msg';
-  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:'https://noctryx.github.io/venky-os/'}});
-  if(error){ msg.textContent=error.message;msg.className='auth-msg error'; }
-  else{ msg.textContent='✓ Check your email for the magic link!';msg.className='auth-msg success'; }
-};
-
-document.getElementById('auth-skip-btn').onclick=()=>{
-  hideAuth();
-  // use localStorage only
-};
-
-/* Cloud sync */
-async function syncToCloud(){
-  if(!sb||!currentUser)return;
-  setSyncBadge('syncing');
-  const payload={ user_id:currentUser.id, entries:JSON.stringify(entries), done_marks:JSON.stringify(done), updated_at:new Date().toISOString() };
-  const{error}=await sb.from('user_data').upsert(payload,{onConflict:'user_id'});
-  if(error){ console.error('sync error',error);setSyncBadge('offline'); }
-  else setSyncBadge('synced');
-}
-
-async function syncFromCloud(){
-  if(!sb||!currentUser)return;
-  setSyncBadge('syncing');
-  const{data,error}=await sb.from('user_data').select('*').eq('user_id',currentUser.id).single();
-  if(error&&error.code!=='PGRST116'){ setSyncBadge('offline');return; }
-  if(data){
-    try{ entries=JSON.parse(data.entries||'[]'); }catch(e){}
-    try{ done=JSON.parse(data.done_marks||'{}'); }catch(e){}
-    saveEntries();saveDone();
-    renderAll();scheduleNotifications();
-  }
-  setSyncBadge('synced');
-}
-
-function setSyncBadge(state){
-  const b=document.getElementById('sync-badge');
-  if(!b)return;
-  b.className='sync-badge'+(state!=='synced'?' '+state:'');
-  b.textContent=state==='syncing'?'syncing…':state==='offline'?'offline':'synced';
-}
-
-/* Override save functions to also sync */
-const _saveEntries=saveEntries;
-const _saveDone=saveDone;
-function saveEntries(){ localStorage.setItem('lifeos-entries',JSON.stringify(entries)); syncToCloud(); }
-function saveDone(){ localStorage.setItem('lifeos-done',JSON.stringify(done)); syncToCloud(); }
-
-/* Register service worker */
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/venky-os/sw.js').then(r=>console.log('SW registered',r.scope)).catch(e=>console.warn('SW failed',e));
-  });
-}
-
-initSupabase();
-
-loadAll();seedSchedule();
-if(SUPABASE_URL!=="YOUR_SUPABASE_URL"){checkSession();}else{renderAll();scheduleNotifications();}
+loadAll();seedSchedule();renderAll();scheduleNotifications();
 /* Re-check notifications every minute in case day changes */
 setInterval(()=>{scheduleNotifications();},60000);
 </script>
