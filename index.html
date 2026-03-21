@@ -1236,7 +1236,7 @@ document.getElementById('auth-magic-btn').onclick=async()=>{
   if(!email){ msg.textContent='Please enter your email.';msg.className='auth-msg error';return; }
   if(!sb){ msg.textContent='Supabase not configured yet — see SETUP.md.';msg.className='auth-msg error';return; }
   msg.textContent='Sending magic link…';msg.className='auth-msg';
-  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
+  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:'https://noctryx.github.io/venky-os/'}});
   if(error){ msg.textContent=error.message;msg.className='auth-msg error'; }
   else{ msg.textContent='✓ Check your email for the magic link!';msg.className='auth-msg success'; }
 };
