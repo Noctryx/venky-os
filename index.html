@@ -3471,7 +3471,7 @@
 
       /* ══ SUPABASE SYNC ══ */
       const CONFIG = {
-        SUPABASE_URL: "https://hfqevpleokouueujmdpk.supabase.co/rest/v1/",
+        SUPABASE_URL: "https://hfqevpleokouueujmdpk.supabase.co/",
         SUPABASE_ANON:
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmcWV2cGxlb2tvdXVldWptZHBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczODU3NjEsImV4cCI6MjA5Mjk2MTc2MX0.oxtliyqKvoPti6JD-EvDjZRpDULtWTB2ywQx4DidRFQ",
         EMAIL_REDIRECT: "https://noctryx.github.io/venky-os/",
@@ -3568,6 +3568,8 @@
         msg.textContent = "Sending…";
         msg.className = "auth-msg";
         try {
+          console.log("SUPABASE_URL:", CONFIG.SUPABASE_URL);
+          console.log("EMAIL_REDIRECT:", CONFIG.EMAIL_REDIRECT);
           const { error } = await sb.auth.signInWithOtp({
             email,
             options: { emailRedirectTo: CONFIG.EMAIL_REDIRECT },
