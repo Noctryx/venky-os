@@ -11,6 +11,7 @@ A personal life operating system — built to track, reflect on, and improve eve
 Venky's OS is a single-file progressive web app that replaces scattered notes, phone reminders, and mental overhead with one clean system. It covers four life areas — **Self, Work, Family, Friends** — and shows you how consistently you're showing up across all of them.
 
 ### Views
+
 - **Today** — session-based daily schedule (Morning / Afternoon / Evening) with a live completion score
 - **Week** — 7-day grid with area balance bars showing where your attention went
 - **Month** — calendar heat-dots for every scheduled day
@@ -18,6 +19,7 @@ Venky's OS is a single-file progressive web app that replaces scattered notes, p
 - **Insights** — consistency %, completion %, streaks, day-of-week patterns, 90-day heatmap
 
 ### Features
+
 - ✅ Mark entries as done with a single tap
 - 🔁 Repeat rules — daily, weekdays, weekends, weekly, monthly, or custom days
 - 🔔 Browser notifications with configurable lead time (5/10/15/30 min)
@@ -31,14 +33,14 @@ Venky's OS is a single-file progressive web app that replaces scattered notes, p
 
 ## Tech stack
 
-| Layer | Tool |
-|---|---|
-| Frontend | Vanilla HTML/CSS/JS — no framework |
-| Charts | Chart.js 4.4 |
+| Layer     | Tool                                   |
+| --------- | -------------------------------------- |
+| Frontend  | Vanilla HTML/CSS/JS — no framework     |
+| Charts    | Chart.js 4.4                           |
 | Auth + DB | Supabase (magic link OTP + PostgreSQL) |
-| Hosting | GitHub Pages |
-| Offline | Service Worker + Cache API |
-| Fonts | DM Sans + DM Mono (Google Fonts) |
+| Hosting   | GitHub Pages                           |
+| Offline   | Service Worker + Cache API             |
+| Fonts     | DM Sans + DM Mono (Google Fonts)       |
 
 No build step. No npm. No node_modules. Open `index.html` and it runs.
 
@@ -59,12 +61,13 @@ venky-os/
 
 ## Running locally
 
-No setup needed — just open the file:
+No setup needed for basic viewing, but to test PWA and service-worker features run a local static server (service workers require `http(s)` or `localhost`):
 
 ```bash
 git clone https://github.com/Noctryx/venky-os.git
 cd venky-os
-# open index.html in any browser
+# serve locally on http://localhost:3000
+npx serve .
 ```
 
 For sync to work across devices, you need a Supabase project (see below).
@@ -93,11 +96,14 @@ with check (auth.uid() = user_id);
 ```
 
 3. Go to **Project Settings → API** and copy your Project URL and anon key
-4. In `index.html`, replace:
+4. In `index.html`, replace the `CONFIG` placeholders at the top of the Supabase section:
 
 ```js
-const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+const CONFIG = {
+  SUPABASE_URL: "YOUR_SUPABASE_URL",
+  SUPABASE_ANON: "YOUR_SUPABASE_ANON_KEY",
+  EMAIL_REDIRECT: "https://your-hosting-url/",
+};
 ```
 
 5. In Supabase → **Authentication → URL Configuration**, set both Site URL and Redirect URL to your GitHub Pages URL
@@ -108,10 +114,12 @@ const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
 ## Installing as an app
 
 **Android (Chrome):**
+
 1. Open the live URL in Chrome
 2. Tap ⋮ menu → Add to Home screen
 
 **Desktop (Chrome):**
+
 1. Open the live URL
 2. Click the ⊕ icon in the address bar → Install
 

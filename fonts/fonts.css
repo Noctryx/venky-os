@@ -1,0 +1,57 @@
+/* Local font bundle. These reference local TTF files downloaded from Google Fonts. */
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("DM-Sans-400.ttf") format("truetype");
+}
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("DM-Sans-700.ttf") format("truetype");
+}
+@font-face {
+  font-family: "DM Sans";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("DM-Sans-italic-400.ttf") format("truetype");
+}
+@font-face {
+  font-family: "DM Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("DM-Mono-400.ttf") format("truetype");
+}
+@font-face {
+  font-family: "DM Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("DM-Mono-500.ttf") format("truetype");
+}
+
+/* Fallback: keep same font-family names used in the app */
+body {
+  font-family:
+    "DM Sans",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+}
+pre,
+code,
+.date-pill,
+.chip-time-badge {
+  font-family:
+    "DM Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono",
+    "Courier New", monospace;
+}

@@ -8,15 +8,31 @@ const ASSETS = [
   `${APP_PREFIX || ""}/manifest.json`,
   `${APP_PREFIX || ""}/icon-192.png`,
   `${APP_PREFIX || ""}/icon-512.png`,
+  `${APP_PREFIX || ""}/supabase.min.js`,
+  `${APP_PREFIX || ""}/chart.umd.min.js`,
+  `${APP_PREFIX || ""}/fonts/fonts.css`,
+  `${APP_PREFIX || ""}/fonts/DM-Sans.woff2`,
+  `${APP_PREFIX || ""}/fonts/DM-Mono.woff2`,
 ];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) =>
-        Promise.allSettled(ASSETS.map((asset) => cache.add(asset))),
-      )
+      .then(async (cache) => {
+        try {
+          await cache.addAll(ASSETS);
+        } catch (err) {
+          console.warn("SW install: some assets failed to cache", err);
+          for (const asset of ASSETS) {
+            try {
+              await cache.add(asset);
+            } catch (e) {
+              console.warn("SW install: failed to cache", asset, e);
+            }
+          }
+        }
+      })
       .then(() => self.skipWaiting()),
   );
 });
@@ -45,7 +61,13 @@ self.addEventListener("fetch", (e) => {
   // Network-only for live sync APIs; fail fast while offline.
   if (url.hostname.includes("supabase.co")) {
     e.respondWith(
-      fetch(req).catch(() => new Response("offline", { status: 503 })),
+      fetch(req).catch(
+        () =>
+          new Response(JSON.stringify({ error: "offline" }), {
+            status: 503,
+            headers: { "Content-Type": "application/json" },
+          }),
+      ),
     );
     return;
   }
@@ -56,12 +78,14 @@ self.addEventListener("fetch", (e) => {
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy));
+          // cache a canonical shell fallback for navigations
+          caches.open(CACHE).then((c) => c.put(SHELL_FALLBACK, copy));
           return res;
         })
         .catch(
           async () =>
-            (await caches.match(req)) || (await caches.match(SHELL_FALLBACK)),
+            (await caches.match(req.url)) ||
+            (await caches.match(SHELL_FALLBACK)),
         ),
     );
     return;
@@ -88,7 +112,7 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     fetch(req)
       .then((res) => {
-        if (res.ok) {
+        if (res.ok || res.type === "opaque") {
           const copy = res.clone();
           caches.open(RUNTIME).then((c) => c.put(req, copy));
         }
