@@ -1678,6 +1678,15 @@
       .btn-cancel:hover {
         color: var(--t1);
       }
+      @media (max-width: 760px) {
+        .week-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+        .week-day {
+          min-height: 126px;
+        }
+      }
       @media (max-width: 680px) {
         .app {
           padding: 0 14px;
@@ -1710,10 +1719,6 @@
         }
         .areas-grid {
           grid-template-columns: 1fr;
-        }
-        .week-grid {
-          grid-template-columns: repeat(4, 1fr);
-          gap: 8px;
         }
         .form-row {
           grid-template-columns: 1fr;
@@ -1776,12 +1781,12 @@
           gap: 8px;
         }
         .week-grid {
-          grid-template-columns: repeat(3, 1fr);
-          gap: 7px;
+          grid-template-columns: 1fr;
+          gap: 8px;
         }
         .week-day {
-          min-height: 104px;
-          padding: 11px 8px;
+          min-height: 116px;
+          padding: 12px 10px;
         }
         .month-grid {
           gap: 4px;
